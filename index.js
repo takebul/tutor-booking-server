@@ -4,7 +4,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 8541;
 
 dotenv.config();
@@ -32,7 +32,20 @@ async function run() {
     const db = client.db("TutorBooking");
     const tutorDataCollection = db.collection("tutorData");
 
-    app.get("/tutor", async (req, res) => {
+    app.get("/tutorsFeatures", async (req, res) => {
+      const result = await tutorDataCollection.find().limit(8).toArray();
+      res.send(result);
+    });
+
+    app.get("/tutors/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await tutorDataCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.get("/tutors", async (req, res) => {
       const result = await tutorDataCollection.find().toArray();
       res.send(result);
     });
