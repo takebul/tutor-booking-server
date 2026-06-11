@@ -69,6 +69,26 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+    app.get("/myTutor/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await tutorDataCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      res.send(result);
+    });
+
+    app.path("/myTutor/:id", async (req, res) => {
+      const { id } = req.params;
+      const updatedTutorData = req.body;
+      const result = await tutorDataCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedTutorData },
+      );
+      console.log(result);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
