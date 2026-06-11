@@ -60,6 +60,15 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+    app.get("/myTutors/:tutorId", async (req, res) => {
+      const { tutorId } = req.params;
+      const result = await tutorDataCollection
+        .find({ tutorId: tutorId })
+        .toArray();
+      console.log(result);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
