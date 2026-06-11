@@ -33,7 +33,7 @@ async function run() {
     const tutorDataCollection = db.collection("tutorData");
 
     app.get("/tutorsFeatures", async (req, res) => {
-      const result = await tutorDataCollection.find().limit(8).toArray();
+      const result = await tutorDataCollection.find().limit(6).toArray();
       res.send(result);
     });
 
@@ -46,7 +46,18 @@ async function run() {
     });
 
     app.get("/tutors", async (req, res) => {
-      const result = await tutorDataCollection.find().toArray();
+      const result = await tutorDataCollection
+        .find()
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    app.post("/tutors", async (req, res) => {
+      const TutorData = req.body;
+      console.log(TutorData);
+      const result = await tutorDataCollection.insertOne(TutorData);
+      console.log(result);
       res.send(result);
     });
   } finally {
