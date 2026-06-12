@@ -46,37 +46,6 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/tutors", async (req, res) => {
-    //   const search = req.query.search?.trim();
-    //   console.log(search);
-
-    //   let cursor;
-
-    //   if (search && search.length > 0 && search != "undefined") {
-    //     cursor = tutorDataCollection.find({
-    //       $or: [
-    //         {
-    //           tutorName: {
-    //             $regex: search,
-    //             $options: "i",
-    //           },
-    //         },
-    //         {
-    //           subjectCategory: {
-    //             $regex: search,
-    //             $options: "i",
-    //           },
-    //         },
-    //       ],
-    //     });
-    //   } else {
-    //     cursor = tutorDataCollection.find({});
-    //   }
-    //   const result = await cursor.sort({ _id: -1 }).toArray();
-
-    //   res.send(result);
-    // });
-
     app.get("/tutors", async (req, res) => {
       const search = req.query.search?.trim();
       const startDate = req.query.startDate;
@@ -127,7 +96,6 @@ async function run() {
       const TutorData = req.body;
       TutorData.remainingSlots = parseInt(TutorData.remainingSlots);
       const result = await tutorDataCollection.insertOne(TutorData);
-      console.log(result);
       res.send(result);
     });
 
@@ -136,7 +104,6 @@ async function run() {
       const result = await tutorDataCollection
         .find({ tutorId: tutorId })
         .toArray();
-      console.log(result);
       res.send(result);
     });
 
@@ -156,7 +123,6 @@ async function run() {
         { _id: new ObjectId(id) },
         { $set: updatedTutorData },
       );
-      console.log(result);
       res.send(result);
     });
 
@@ -167,54 +133,6 @@ async function run() {
       });
       res.send(result);
     });
-
-    // app.patch("/tutors/:id", async (req, res) => {
-    //   const { id } = req.params;
-    //   const tutorData = req.body;
-
-    //   const tutor = await tutorDataCollection.findOne({
-    //     _id: new ObjectId(id),
-    //   });
-
-    //   if (!tutor) {
-    //     return res.status(404).json({ message: "Tutor Not Found" });
-    //   }
-
-    //   if (tutor.totalSlot <= 0) {
-    //     return res.status(400).send({
-    //       message: "No available slots left.",
-    //     });
-    //   }
-
-    //   const today = new Date();
-    //   const sessionDate = new Date(tutor.sessionStartDate);
-
-    //   if (today < sessionDate) {
-    //     return res.status(400).send({
-    //       message: "Booking is not available yet for this tutor",
-    //     });
-    //   }
-
-    //   await tutorDataCollection.updateOne(
-    //     {
-    //       _id: new ObjectId(id),
-    //     },
-    //     {
-    //       $inc: { remainingSlots: -1 },
-    //       $set: {
-    //         lastEnrolledAt: new Date(),
-    //       },
-    //     },
-    //   );
-
-    //   const result = await myTutorDataCollection.insertOne({
-    //     ...tutorData,
-    //     status: "pending",
-    //     enrolledAt: new Date(),
-    //   });
-
-    //   res.send(result);
-    // });
 
     app.patch("/tutors/:id", async (req, res) => {
       const { id } = req.params;
@@ -289,7 +207,6 @@ async function run() {
       res.send(result);
     });
   } finally {
-    // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
