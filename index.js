@@ -47,10 +47,38 @@ async function run() {
     });
 
     app.get("/tutors", async (req, res) => {
-      const result = await tutorDataCollection
-        .find()
-        .sort({ _id: -1 })
-        .toArray();
+      // const result = await tutorDataCollection
+      //   .find()
+      //   .sort({ _id: -1 })
+      //   .toArray();
+      // res.send(result);
+      const search = req.query.search?.trim();
+      console.log(search);
+
+      let cursor;
+
+      if (search && search.length > 0 && search != "undefined") {
+        cursor = tutorDataCollection.find({
+          $or: [
+            {
+              tutorName: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              subjectCategory: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        });
+      } else {
+        cursor = tutorDataCollection.find({});
+      }
+      const result = await cursor.sort({ _id: -1 }).toArray();
+
       res.send(result);
     });
 
