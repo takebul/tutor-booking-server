@@ -31,6 +31,7 @@ async function run() {
 
     const db = client.db("TutorBooking");
     const tutorDataCollection = db.collection("tutorData");
+    const myTutorDataCollection = db.collection("myTutorData");
 
     app.get("/tutorsFeatures", async (req, res) => {
       const result = await tutorDataCollection.find().limit(6).toArray();
@@ -55,7 +56,7 @@ async function run() {
 
     app.post("/tutors", async (req, res) => {
       const TutorData = req.body;
-      console.log(TutorData);
+      TutorData.remainingSlots = parseInt(TutorData.remainingSlots);
       const result = await tutorDataCollection.insertOne(TutorData);
       console.log(result);
       res.send(result);
@@ -79,7 +80,7 @@ async function run() {
       res.send(result);
     });
 
-    app.path("/myTutor/:id", async (req, res) => {
+    app.patch("/myTutor/:id", async (req, res) => {
       const { id } = req.params;
       const updatedTutorData = req.body;
       const result = await tutorDataCollection.updateOne(
@@ -87,6 +88,65 @@ async function run() {
         { $set: updatedTutorData },
       );
       console.log(result);
+      res.send(result);
+    });
+
+    app.delete("/myTutor/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await tutorDataCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.patch("/tutors/:id", async (req, res) => {
+      const { id } = req.params;
+      const tutorData = req.body;
+
+      const tutor = await tutorDataCollection.findOne({
+        _id: new ObjectId(id),
+      });
+
+      if (!tutor) {
+        return res.status(404).json({ message: "Tutor Not Found" });
+      }
+
+      await tutorDataCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        {
+          $inc: { remainingSlots: -1 },
+          $set: {
+            lastEnrolledAt: new Date(),
+          },
+        },
+      );
+
+      const result = await myTutorDataCollection.insertOne({
+        ...tutorData,
+        status: "pending",
+        enrolledAt: new Date(),
+      });
+
+      res.send(result);
+    });
+
+    app.get("/tutorBookedData", async (req, res) => {
+      const result = await myTutorDataCollection
+        .find()
+        .sort({ _id: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    app.patch("/tutorBookedData/:id", async (req, res) => {
+      const { id } = req.params;
+      const status = req.body;
+      const result = await myTutorDataCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "Cancelled" } },
+      );
       res.send(result);
     });
   } finally {
