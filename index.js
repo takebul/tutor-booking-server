@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const port = process.env.PORT || 8541;
 
 dotenv.config();
@@ -20,6 +21,31 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers?.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
 
 async function run() {
   try {
@@ -38,7 +64,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/tutors/:id", async (req, res) => {
+    app.get("/tutors/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await tutorDataCollection.findOne({
         _id: new ObjectId(id),
@@ -92,14 +118,14 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/tutors", async (req, res) => {
+    app.post("/tutors", verifyToken, async (req, res) => {
       const TutorData = req.body;
       TutorData.remainingSlots = parseInt(TutorData.remainingSlots);
       const result = await tutorDataCollection.insertOne(TutorData);
       res.send(result);
     });
 
-    app.get("/myTutors/:tutorId", async (req, res) => {
+    app.get("/myTutors/:tutorId", verifyToken, async (req, res) => {
       const { tutorId } = req.params;
       const result = await tutorDataCollection
         .find({ tutorId: tutorId })
@@ -107,7 +133,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/myTutor/:id", async (req, res) => {
+    app.get("/myTutor/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await tutorDataCollection.findOne({
         _id: new ObjectId(id),
@@ -116,7 +142,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/myTutor/:id", async (req, res) => {
+    app.patch("/myTutor/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const updatedTutorData = req.body;
       const result = await tutorDataCollection.updateOne(
@@ -126,7 +152,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/myTutor/:id", async (req, res) => {
+    app.delete("/myTutor/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await tutorDataCollection.deleteOne({
         _id: new ObjectId(id),
@@ -134,7 +160,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/tutors/:id", async (req, res) => {
+    app.patch("/tutors/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const tutorData = req.body;
 
@@ -189,7 +215,7 @@ async function run() {
       });
     });
 
-    app.get("/tutorBookedData", async (req, res) => {
+    app.get("/tutorBookedData", verifyToken, async (req, res) => {
       const result = await myTutorDataCollection
         .find()
         .sort({ _id: -1 })
@@ -197,7 +223,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/tutorBookedData/:id", async (req, res) => {
+    app.patch("/tutorBookedData/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const status = req.body;
       const result = await myTutorDataCollection.updateOne(
